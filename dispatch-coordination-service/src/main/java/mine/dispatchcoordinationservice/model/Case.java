@@ -38,7 +38,7 @@ public class Case {
     @Column(name = "estimated_distance", nullable = false)
     private Double estimatedDistance;
 
-    @Column(name = "route_geometry", nullable = false)
+    @Column(name = "route_geometry", nullable = false, columnDefinition = "LONGTEXT")
     private String routeGeometry;
 
     @Column(name = "real_duration")
