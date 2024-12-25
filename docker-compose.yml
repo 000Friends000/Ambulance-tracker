@@ -7,22 +7,27 @@ services:
       dockerfile: eureka-server/Dockerfile
     ports:
       - "8761:8761"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - JAVA_OPTS=-XX:+UseContainerSupport -Xmx512m
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8761/actuator/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8761"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
 
   api-gateway:
     build:
       context: .
       dockerfile: api-gateway/Dockerfile
     ports:
-      - "8080:8080"
+      - "8888:8888"
     depends_on:
       eureka-server:
         condition: service_healthy
     environment:
+      - SPRING_PROFILES_ACTIVE=docker
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
 
   ambulance-service:
@@ -30,23 +35,12 @@ services:
       context: .
       dockerfile: Ambulance_Service/Dockerfile
     ports:
-      - "8081:8081"
+      - "8094:8094"
     depends_on:
       eureka-server:
         condition: service_healthy
     environment:
-      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
-
-  dispatch-coordination-service:
-    build:
-      context: .
-      dockerfile: dispatch-coordination-service/Dockerfile
-    ports:
-      - "8082:8082"
-    depends_on:
-      eureka-server:
-        condition: service_healthy
-    environment:
+      - SPRING_PROFILES_ACTIVE=docker
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
 
   hospital-management-service:
@@ -54,11 +48,12 @@ services:
       context: .
       dockerfile: hospital-management-service/Dockerfile
     ports:
-      - "8083:8083"
+      - "8093:8093"
     depends_on:
       eureka-server:
         condition: service_healthy
     environment:
+      - SPRING_PROFILES_ACTIVE=docker
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
 
   route-optimization-service:
@@ -71,8 +66,46 @@ services:
       eureka-server:
         condition: service_healthy
     environment:
+      - SPRING_PROFILES_ACTIVE=docker
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+
+  mysql:
+    image: mysql:8.0
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=1234
+      - MYSQL_DATABASE=dispatch_db
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p1234"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  dispatch-coordination-service:
+    build:
+      context: .
+      dockerfile: dispatch-coordination-service/Dockerfile
+    ports:
+      - "8096:8096"
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      mysql:
+        condition: service_healthy
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/dispatch_db
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=1234
 
 networks:
   default:
     driver: bridge
+
+volumes:
+  mysql_data:

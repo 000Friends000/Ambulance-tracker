@@ -14,6 +14,7 @@ RUN mvn -B -f eureka-server/pom.xml clean package -DskipTests
 # Use JRE for runtime
 FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
+RUN apk add --no-cache wget
 COPY --from=builder /build/eureka-server/target/*.jar app.jar
 
 # Expose the application port

@@ -1,6 +1,5 @@
 FROM maven:3.9.9-eclipse-temurin-17-alpine AS builder
 WORKDIR /build
-COPY pom.xml .
 COPY hospital-management-service/pom.xml hospital-management-service/
 RUN mvn -B -f hospital-management-service/pom.xml dependency:go-offline
 

@@ -11,8 +11,8 @@
 	<groupId>Mine</groupId>
 	<artifactId>dispatch-coordination-service</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>dispatch-coordination-service</name>
-	<description>dispatch-coordination-service</description>
+	<name>Dispatch Coordination Service</name>
+	<description>Dispatch Coordination Service</description>
 	<url/>
 	<licenses>
 		<license/>
@@ -41,6 +41,19 @@
 			<artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
 		</dependency>
 
+		<!-- MySQL -->
+		<dependency>
+			<groupId>mysql</groupId>
+			<artifactId>mysql-connector-java</artifactId>
+			<version>8.0.33</version>
+		</dependency>
+
+		<!-- Spring Data JPA -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-jpa</artifactId>
+		</dependency>
+
 		<!-- WebFlux for WebClient -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -64,14 +77,6 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-actuator</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>com.mysql</groupId>
-			<artifactId>mysql-connector-j</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-data-jpa</artifactId>
 		</dependency>
 
 		<dependency>
