@@ -2,5 +2,9 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="" vcs="Git" />
+<<<<<<< HEAD
+=======
+    <mapping directory="$PROJECT_DIR$/route-optimization-service" vcs="Git" />
+>>>>>>> 55efb6b9aa00bb003d6b1db16494e8005ba2b809
   </component>
 </project>
