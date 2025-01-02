@@ -2,6 +2,15 @@ version: '3.8'
 name: test
 
 services:
+  eureka-server:
+    container_name: test-eureka
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: eureka-server
+    ports:
+      - "8761:8761"
+
   mysql:
     image: mysql:8.0
     container_name: test-mysql
@@ -13,6 +22,8 @@ services:
       - "3307:3306"
     volumes:
       - mysql_data:/var/lib/mysql
+    depends_on:
+      - eureka-server
 
   api-gateway:
     container_name: test-gateway
@@ -23,6 +34,7 @@ services:
     ports:
       - "8084:8084"
     depends_on:
+      - eureka-server
       - mysql
     environment:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
@@ -36,6 +48,7 @@ services:
     ports:
       - "8888:8888"
     depends_on:
+      - eureka-server
       - api-gateway
     environment:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
@@ -49,6 +62,7 @@ services:
     ports:
       - "8095:8095"
     depends_on:
+      - eureka-server
       - mysql
       - api-gateway
     environment:
@@ -67,6 +81,7 @@ services:
     ports:
       - "8096:8096"
     depends_on:
+      - eureka-server
       - mysql
       - api-gateway
     environment:
@@ -85,6 +100,7 @@ services:
     ports:
       - "8093:8093"
     depends_on:
+      - eureka-server
       - mysql
       - api-gateway
     environment:
@@ -93,15 +109,6 @@ services:
       - SPRING_DATASOURCE_USERNAME=root
       - SPRING_DATASOURCE_PASSWORD=root
       - SPRING_JPA_HIBERNATE_DDL_AUTO=update
-
-  eureka-server:
-    container_name: test-eureka
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: eureka-server
-    ports:
-      - "8761:8761"
 
 volumes:
   mysql_data:
