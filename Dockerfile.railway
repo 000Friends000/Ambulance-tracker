@@ -43,7 +43,7 @@ FROM eclipse-temurin:17-jre-alpine
 RUN apk add --no-cache curl supervisor postgresql postgresql-client && \
     addgroup -S spring && adduser -S spring -G spring
 
-# Create app directories
+# Create app directories and setup PostgreSQL
 WORKDIR /app
 RUN mkdir -p \
     eureka-server \
@@ -51,8 +51,8 @@ RUN mkdir -p \
     ambulance-service \
     dispatch-service \
     hospital-service \
-    route-service \
-    /var/lib/postgresql/data && \
+    route-service && \
+    mkdir -p /var/lib/postgresql/data && \
     chown -R postgres:postgres /var/lib/postgresql/data && \
     chmod 700 /var/lib/postgresql/data
 
