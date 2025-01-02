@@ -17,19 +17,13 @@ RUN mvn clean package -DskipTests
 # Runtime stage
 FROM eclipse-temurin:17-jre-alpine
 
-# Install necessary tools including MySQL
-RUN apk add --no-cache curl supervisor mysql mysql-client
+# Install necessary tools including PostgreSQL
+RUN apk add --no-cache curl supervisor postgresql postgresql-client
 
 # Create a non-root user
 RUN addgroup -S spring && adduser -S spring -G spring
-USER spring:spring
 
-# Setup MySQL
-RUN mkdir -p /run/mysqld && \
-    chown -R mysql:mysql /run/mysqld && \
-    mysql_install_db --user=mysql --datadir=/var/lib/mysql
-
-# Create directories for each service
+# Create directories and setup PostgreSQL
 WORKDIR /app
 RUN mkdir -p \
     /app/eureka-server \
@@ -37,7 +31,10 @@ RUN mkdir -p \
     /app/ambulance-service \
     /app/dispatch-service \
     /app/hospital-service \
-    /app/route-service
+    /app/route-service \
+    /var/lib/postgresql/data && \
+    chown -R postgres:postgres /var/lib/postgresql/data && \
+    chmod 700 /var/lib/postgresql/data
 
 # Copy the built JARs from builder stage
 COPY --from=builder --chown=spring:spring /build/eureka-server/target/eureka-server-0.0.1-SNAPSHOT.jar /app/eureka-server/app.jar
@@ -47,27 +44,29 @@ COPY --from=builder --chown=spring:spring /build/dispatch-coordination-service/t
 COPY --from=builder --chown=spring:spring /build/hospital-management-service/target/hospital-management-service-0.0.1-SNAPSHOT.jar /app/hospital-service/app.jar
 COPY --from=builder --chown=spring:spring /build/route-optimization-service/target/route-optimization-service-0.0.1-SNAPSHOT.jar /app/route-service/app.jar
 
-# Create MySQL init script
+# Copy configuration files
 COPY ["./Ambilance Tracker Backend/init.sql", "/docker-entrypoint-initdb.d/"]
-
-# Create supervisor configuration
-RUN mkdir -p /etc/supervisor.d/
 COPY ["./Ambilance Tracker Backend/supervisord.conf", "/etc/supervisord.conf"]
+COPY ["./Ambilance Tracker Backend/init-postgres.sh", "/docker-entrypoint-initdb.d/"]
 
-# Switch back to root to setup supervisor
-USER root
-
-# Expose all necessary ports
-EXPOSE 3306 8761 8084 8095 8096 8093
+# Make init script executable and run it
+RUN chmod +x /docker-entrypoint-initdb.d/init-postgres.sh && \
+    /docker-entrypoint-initdb.d/init-postgres.sh
 
 # Set Java options
 ENV JAVA_OPTS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -Djava.security.egd=file:/dev/./urandom"
 
-# Set MySQL environment variables
-ENV MYSQL_DATABASE=ambulance_db \
-    MYSQL_USER=root \
-    MYSQL_PASSWORD=root \
-    MYSQL_ROOT_PASSWORD=root
+# Set PostgreSQL environment variables
+ENV POSTGRES_DB=ambulance_db \
+    POSTGRES_USER=postgres \
+    POSTGRES_PASSWORD=root
+
+# Expose all necessary ports
+EXPOSE 5432 8761 8084 8095 8096 8093
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
+    CMD curl -f http://localhost:8761/actuator/health || exit 1
 
 # Start supervisor
 CMD ["supervisord", "-c", "/etc/supervisord.conf"]
