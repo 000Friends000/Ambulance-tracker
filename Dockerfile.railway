@@ -40,7 +40,7 @@ RUN set -x && \
 FROM eclipse-temurin:17-jre-alpine
 
 # Install necessary tools and create users
-RUN apk add --no-cache curl supervisor mariadb mariadb-client && \
+RUN apk add --no-cache curl supervisor mysql mysql-client && \
     addgroup -S spring && adduser -S spring -G spring
 
 # Create app directories
@@ -53,16 +53,6 @@ RUN mkdir -p \
     hospital-service \
     route-service
 
-# Setup MariaDB
-RUN set -ex && \
-    mkdir -p /run/mysqld && \
-    chown -R mysql:mysql /run/mysqld && \
-    mkdir -p /var/lib/mysql && \
-    chown -R mysql:mysql /var/lib/mysql && \
-    mkdir -p /docker-entrypoint-initdb.d && \
-    chown -R mysql:mysql /docker-entrypoint-initdb.d && \
-    mysql_install_db --user=mysql --datadir=/var/lib/mysql
-
 # Copy the built JARs from builder stage
 COPY --from=builder --chown=spring:spring /build/eureka-server/target/eureka-server-0.0.1-SNAPSHOT.jar /app/eureka-server/app.jar
 COPY --from=builder --chown=spring:spring /build/api-gateway/target/api-gateway.jar /app/api-gateway/app.jar
@@ -74,6 +64,11 @@ COPY --from=builder --chown=spring:spring /build/route-optimization-service/targ
 # Copy configuration files
 COPY Ambilance\ Tracker\ Backend/init.sql /docker-entrypoint-initdb.d/
 COPY Ambilance\ Tracker\ Backend/supervisord.conf /etc/supervisord.conf
+COPY Ambilance\ Tracker\ Backend/init-mysql.sh /docker-entrypoint-initdb.d/
+
+# Make init script executable and run it
+RUN chmod +x /docker-entrypoint-initdb.d/init-mysql.sh && \
+    /docker-entrypoint-initdb.d/init-mysql.sh
 
 # Set environment variables
 ENV JAVA_OPTS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -Djava.security.egd=file:/dev/./urandom"
