@@ -1,77 +1,25 @@
 version: '3.8'
 
 services:
-  eureka-server:
+  app:
     build:
-      context: ./eureka-server
+      context: .
       dockerfile: Dockerfile
     ports:
-      - "8761:8761"
+      - "8080:8080"  # API Gateway
+      - "8761:8761"  # Eureka Server
+      - "8081:8081"  # Ambulance Service
+      - "8082:8082"  # Dispatch Service
+      - "8083:8083"  # Hospital Service
+      - "8084:8084"  # Route Service
+    environment:
+      - PORT=8080
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://localhost:8761/eureka/
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8761/actuator/health"]
       interval: 30s
       timeout: 10s
       retries: 5
-
-  api-gateway:
-    build:
-      context: .
-      dockerfile: api-gateway/Dockerfile
-    ports:
-      - "8080:8080"
-    depends_on:
-      eureka-server:
-        condition: service_healthy
-    environment:
-      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
-
-  ambulance-service:
-    build:
-      context: ./Ambulance_Service
-      dockerfile: Dockerfile
-    ports:
-      - "8081:8081"
-    depends_on:
-      eureka-server:
-        condition: service_healthy
-    environment:
-      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
-
-  dispatch-coordination-service:
-    build:
-      context: .
-      dockerfile: dispatch-coordination-service/Dockerfile
-    ports:
-      - "8082:8082"
-    depends_on:
-      eureka-server:
-        condition: service_healthy
-    environment:
-      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
-
-  hospital-management-service:
-    build:
-      context: ./hospital-management-service
-      dockerfile: Dockerfile
-    ports:
-      - "8083:8083"
-    depends_on:
-      eureka-server:
-        condition: service_healthy
-    environment:
-      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
-
-  route-optimization-service:
-    build:
-      context: ./route-optimization-service
-      dockerfile: Dockerfile
-    ports:
-      - "8084:8084"
-    depends_on:
-      eureka-server:
-        condition: service_healthy
-    environment:
-      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
 
 networks:
   default:
