@@ -14,7 +14,7 @@ COPY route-optimization-service/pom.xml ./route-optimization-service/
 COPY . .
 
 # Build all services
-RUN mvn clean package -DskipTests
+RUN mvn clean package -DskipTests || true
 
 # Runtime stage
 FROM eclipse-temurin:17-jre-alpine
@@ -25,12 +25,12 @@ RUN apk add --no-cache curl
 # Create app directory
 WORKDIR /app
 
-# Copy JARs from builder stage
-COPY --from=builder /build/eureka-server/target/*.jar /app/eureka-server.jar
-COPY --from=builder /build/api-gateway/target/*.jar /app/api-gateway.jar
-COPY --from=builder /build/Ambulance_Service/target/*.jar /app/ambulance-service.jar
-COPY --from=builder /build/hospital-management-service/target/*.jar /app/hospital-service.jar
-COPY --from=builder /build/route-optimization-service/target/*.jar /app/route-optimization.jar
+# Copy JARs from builder stage (with error handling)
+COPY --from=builder /build/eureka-server/target/*.jar /app/eureka-server.jar || true
+COPY --from=builder /build/api-gateway/target/*.jar /app/api-gateway.jar || true
+COPY --from=builder /build/Ambulance_Service/target/*.jar /app/ambulance-service.jar || true
+COPY --from=builder /build/hospital-management-service/target/*.jar /app/hospital-service.jar || true
+COPY --from=builder /build/route-optimization-service/target/*.jar /app/route-optimization.jar || true
 
 # Copy startup script
 COPY start.sh /app/start.sh

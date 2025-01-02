@@ -13,6 +13,7 @@
         <module>eureka-server</module>
         <module>hospital-management-service</module>
         <module>route-optimization-service</module>
+        <module>api-gateway</module>
     </modules>
 
     <properties>
