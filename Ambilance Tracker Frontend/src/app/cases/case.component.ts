@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import * as mapboxgl from 'mapbox-gl';
-import polyline from '@mapbox/polyline';
+import * as polylineUtil from '@mapbox/polyline';
 import { CaseService } from '../services/case.service';
 import { WebsocketService } from '../services/websocket.service';
 import { AmbulanceService } from '../services/ambulance.service';
@@ -291,7 +291,7 @@ export class CaseComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const coordinates: Array<[number, number]> = polyline.decode(caseItem.routePolyline)
+    const coordinates: Array<[number, number]> = polylineUtil.decode(caseItem.routePolyline)
       .map((point: [number, number]) => [point[1], point[0]]);
 
     const sourceId = `route-source-${caseItem.id}`;
@@ -306,7 +306,7 @@ export class CaseComponent implements OnInit, OnDestroy {
           type: 'LineString',
           coordinates,
         },
-        properties: {},
+        properties: {} as any,
       } as GeoJSON.Feature<GeoJSON.Geometry>,
     });
 
