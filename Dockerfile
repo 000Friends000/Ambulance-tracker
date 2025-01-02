@@ -62,7 +62,7 @@ USER spring:spring
 WORKDIR /app
 COPY --from=builder --chown=spring:spring /build/api-gateway/target/api-gateway.jar app.jar
 ENV JAVA_OPTS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -Djava.security.egd=file:/dev/./urandom"
-ENV EUREKA_CLIENT_SERVICEURL_DEFAULTZONE="http://ambulance-tracker-production.up.railway.app:8761/eureka/"
+ENV EUREKA_CLIENT_SERVICEURL_DEFAULTZONE="https://ambulance-tracker-production.up.railway.app/eureka/"
 ENV EUREKA_INSTANCE_HOSTNAME="ambulance-tracker-production.up.railway.app"
 EXPOSE 8084
 HEALTHCHECK --interval=30s --timeout=10s --retries=3 CMD curl -f http://localhost:8084/actuator/health || exit 1
@@ -112,7 +112,7 @@ USER spring:spring
 WORKDIR /app
 COPY --from=builder --chown=spring:spring /build/route-optimization-service/target/route-optimization-service-0.0.1-SNAPSHOT.jar app.jar
 ENV JAVA_OPTS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -Djava.security.egd=file:/dev/./urandom"
-ENV EUREKA_CLIENT_SERVICEURL_DEFAULTZONE="http://ambulance-tracker-production.up.railway.app:8761/eureka/"
+ENV EUREKA_CLIENT_SERVICEURL_DEFAULTZONE="https://ambulance-tracker-production.up.railway.app/eureka/"
 ENV EUREKA_INSTANCE_HOSTNAME="ambulance-tracker-production.up.railway.app"
 EXPOSE 8888
 HEALTHCHECK --interval=30s --timeout=10s --retries=3 CMD curl -f http://localhost:8888/actuator/health || exit 1
