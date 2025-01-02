@@ -3,8 +3,8 @@ version: '3.8'
 services:
   eureka-server:
     build:
-      context: .
-      dockerfile: eureka-server/Dockerfile
+      context: ./eureka-server
+      dockerfile: Dockerfile
     ports:
       - "8761:8761"
     healthcheck:
@@ -27,8 +27,8 @@ services:
 
   ambulance-service:
     build:
-      context: .
-      dockerfile: Ambulance_Service/Dockerfile
+      context: ./Ambulance_Service
+      dockerfile: Dockerfile
     ports:
       - "8081:8081"
     depends_on:
@@ -51,8 +51,8 @@ services:
 
   hospital-management-service:
     build:
-      context: .
-      dockerfile: hospital-management-service/Dockerfile
+      context: ./hospital-management-service
+      dockerfile: Dockerfile
     ports:
       - "8083:8083"
     depends_on:
@@ -63,8 +63,8 @@ services:
 
   route-optimization-service:
     build:
-      context: .
-      dockerfile: route-optimization-service/Dockerfile
+      context: ./route-optimization-service
+      dockerfile: Dockerfile
     ports:
       - "8084:8084"
     depends_on:
@@ -76,3 +76,4 @@ services:
 networks:
   default:
     driver: bridge
+    name: ambulance-network

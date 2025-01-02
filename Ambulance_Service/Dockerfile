@@ -1,10 +1,5 @@
-FROM maven:3.9.9-eclipse-temurin-17-alpine AS builder
-WORKDIR /build
-COPY . .
-RUN mvn -B clean package -DskipTests
-
 FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
-COPY --from=builder /build/Ambulance_Service/target/Ambulance_Service-0.0.1-SNAPSHOT.jar /app/app.jar
+COPY target/Ambulance_Service-0.0.1-SNAPSHOT.jar app.jar
 EXPOSE 8081
-ENTRYPOINT ["java", "-jar", "/app/app.jar"]
+ENTRYPOINT ["java", "-jar", "app.jar"]
