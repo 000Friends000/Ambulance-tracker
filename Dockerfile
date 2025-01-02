@@ -14,7 +14,7 @@ COPY route-optimization-service/pom.xml ./route-optimization-service/
 COPY . .
 
 # Build all services
-RUN mvn clean package -DskipTests || true
+RUN mvn clean package -DskipTests
 
 # Runtime stage
 FROM eclipse-temurin:17-jre-alpine
@@ -25,12 +25,22 @@ RUN apk add --no-cache curl
 # Create app directory
 WORKDIR /app
 
-# Copy JARs from builder stage (with error handling)
-COPY --from=builder /build/eureka-server/target/*.jar /app/eureka-server.jar || true
-COPY --from=builder /build/api-gateway/target/*.jar /app/api-gateway.jar || true
-COPY --from=builder /build/Ambulance_Service/target/*.jar /app/ambulance-service.jar || true
-COPY --from=builder /build/hospital-management-service/target/*.jar /app/hospital-service.jar || true
-COPY --from=builder /build/route-optimization-service/target/*.jar /app/route-optimization.jar || true
+# Create a script to copy JARs
+RUN echo '#!/bin/sh\n\
+for jar in \
+    /build/eureka-server/target/*.jar \
+    /build/api-gateway/target/*.jar \
+    /build/Ambulance_Service/target/*.jar \
+    /build/hospital-management-service/target/*.jar \
+    /build/route-optimization-service/target/*.jar; do \
+    if [ -f "$jar" ]; then \
+        cp "$jar" /app/$(basename $(dirname $(dirname $jar))).jar; \
+    fi \
+done' > /copy-jars.sh && chmod +x /copy-jars.sh
+
+# Copy JARs from builder stage
+COPY --from=builder /build /build
+RUN /copy-jars.sh && rm -rf /build /copy-jars.sh
 
 # Copy startup script
 COPY start.sh /app/start.sh
