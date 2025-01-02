@@ -1,56 +1,88 @@
-# Build stage
-FROM maven:3.8.4-openjdk-17-slim AS builder
-
-# Set working directory
+# Build stage for all services
+FROM maven:3.9.9-eclipse-temurin-17-alpine AS builder
 WORKDIR /build
 
-# Copy the entire project for building
-COPY . .
+# Copy the parent pom.xml
+COPY pom.xml .
 
-# Build all services with detailed output
-RUN mvn clean package -DskipTests -X
+# Copy all service pom files first for better layer caching
+COPY eureka-server/pom.xml eureka-server/
+COPY api-gateway/pom.xml api-gateway/
+COPY Ambulance_Service/pom.xml Ambulance_Service/
+COPY dispatch-coordination-service/pom.xml dispatch-coordination-service/
+COPY hospital-management-service/pom.xml hospital-management-service/
+COPY route-optimization-service/pom.xml route-optimization-service/
+
+# Copy source code for all services
+COPY eureka-server/src eureka-server/src
+COPY api-gateway/src api-gateway/src
+COPY Ambulance_Service/src Ambulance_Service/src
+COPY dispatch-coordination-service/src dispatch-coordination-service/src
+COPY hospital-management-service/src hospital-management-service/src
+COPY route-optimization-service/src route-optimization-service/src
+
+# Build each service individually with verbose output
+RUN set -x && \
+    echo "Building Eureka Server..." && \
+    cd eureka-server && mvn clean package -DskipTests && cd .. && \
+    echo "Building API Gateway..." && \
+    cd api-gateway && mvn clean package -DskipTests && cd .. && \
+    echo "Building Ambulance Service..." && \
+    cd Ambulance_Service && mvn clean package -DskipTests && cd .. && \
+    echo "Building Dispatch Service..." && \
+    cd dispatch-coordination-service && mvn clean package -DskipTests && cd .. && \
+    echo "Building Hospital Service..." && \
+    cd hospital-management-service && mvn clean package -DskipTests && cd .. && \
+    echo "Building Route Service..." && \
+    cd route-optimization-service && mvn clean package -DskipTests
 
 # Runtime stage
-FROM eclipse-temurin:17-jdk-alpine
-
-WORKDIR /app
-
-# Copy JAR files from builder stage
-COPY --from=builder /build/eureka-server/target/*.jar eureka.jar
-COPY --from=builder /build/api-gateway/target/*.jar gateway.jar
-COPY --from=builder /build/hospital-management-service/target/*.jar hospital.jar
-COPY --from=builder /build/Ambulance_Service/target/*.jar ambulance.jar
-COPY --from=builder /build/route-optimization-service/target/*.jar route.jar
-COPY --from=builder /build/dispatch-coordination-service/target/*.jar dispatch.jar
-
-# Copy init.sql and supervisord.conf
-COPY Ambilance\ Tracker\ Backend/init.sql /docker-entrypoint-initdb.d/
-COPY Ambilance\ Tracker\ Backend/supervisord.conf /etc/supervisord.conf
+FROM eclipse-temurin:17-jre-alpine
 
 # Install necessary tools
-RUN apk add --no-cache \
-    curl \
-    supervisor \
-    mysql \
-    mysql-client
+RUN apk add --no-cache curl supervisor mysql mysql-client && \
+    addgroup -S spring && adduser -S spring -G spring
 
 # Setup MySQL
 RUN mkdir -p /run/mysqld && \
     chown -R mysql:mysql /run/mysqld && \
     mysql_install_db --user=mysql --datadir=/var/lib/mysql
 
+# Create app directories
+WORKDIR /app
+RUN mkdir -p \
+    eureka-server \
+    api-gateway \
+    ambulance-service \
+    dispatch-service \
+    hospital-service \
+    route-service
+
+# Copy the built JARs from builder stage
+COPY --from=builder --chown=spring:spring /build/eureka-server/target/eureka-server-0.0.1-SNAPSHOT.jar /app/eureka-server/app.jar
+COPY --from=builder --chown=spring:spring /build/api-gateway/target/api-gateway.jar /app/api-gateway/app.jar
+COPY --from=builder --chown=spring:spring /build/Ambulance_Service/target/Ambulance_Service-0.0.1-SNAPSHOT.jar /app/ambulance-service/app.jar
+COPY --from=builder --chown=spring:spring /build/dispatch-coordination-service/target/dispatch-coordination-service-0.0.1-SNAPSHOT.jar /app/dispatch-service/app.jar
+COPY --from=builder --chown=spring:spring /build/hospital-management-service/target/hospital-management-service-0.0.1-SNAPSHOT.jar /app/hospital-service/app.jar
+COPY --from=builder --chown=spring:spring /build/route-optimization-service/target/route-optimization-service-0.0.1-SNAPSHOT.jar /app/route-service/app.jar
+
+# Copy configuration files
+COPY Ambilance\ Tracker\ Backend/init.sql /docker-entrypoint-initdb.d/
+COPY Ambilance\ Tracker\ Backend/supervisord.conf /etc/supervisord.conf
+
 # Set environment variables
+ENV JAVA_OPTS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -Djava.security.egd=file:/dev/./urandom"
 ENV MYSQL_DATABASE=ambulance_db \
     MYSQL_USER=root \
     MYSQL_PASSWORD=root \
     MYSQL_ROOT_PASSWORD=root
 
-# Expose all service ports
-EXPOSE 3306 8761 8084 8093 8095 8096
+# Expose all necessary ports
+EXPOSE 3306 8761 8084 8095 8096 8093
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
     CMD curl -f http://localhost:8761/actuator/health || exit 1
 
-# Start services using supervisor
+# Start all services using supervisor
 CMD ["supervisord", "-c", "/etc/supervisord.conf"]
