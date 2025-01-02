@@ -32,7 +32,6 @@
         <button class="action-btn show-route" (click)="toggleRoute(caseItem)" [class.active]="isRouteActive(caseItem.id)">
           {{ isRouteActive(caseItem.id) ? 'Hide Route' : 'Show Route' }}
         </button>
-        <button class="action-btn edit" (click)="editCase(caseItem)">Edit</button>
         <button class="action-btn remove" (click)="removeCase(caseItem.id)">Remove</button>
       </div>
     </div>

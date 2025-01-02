@@ -483,13 +483,20 @@ export class CaseComponent implements OnInit, OnDestroy {
     });
   }
 
-  editCase(caseItem: Case): void {
-    // Implement edit functionality
-    console.log('Editing case:', caseItem);
-  }
-
   removeCase(id: number): void {
-    // Implement remove functionality
-    console.log('Removing case:', id);
+    if (confirm('Are you sure you want to delete this case?')) {
+      this.caseService.deleteCase(id).subscribe({
+        next: () => {
+          // Remove the case's route if it's active
+          this.removeRoute(id);
+          // Remove the case from the local array
+          this.cases = this.cases.filter(c => c.id !== id);
+          console.log('Case deleted successfully');
+        },
+        error: (error) => {
+          console.error('Error deleting case:', error);
+        }
+      });
+    }
   }
 }
