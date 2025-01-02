@@ -51,7 +51,10 @@ RUN mkdir -p \
     ambulance-service \
     dispatch-service \
     hospital-service \
-    route-service
+    route-service \
+    /var/lib/postgresql/data && \
+    chown -R postgres:postgres /var/lib/postgresql/data && \
+    chmod 700 /var/lib/postgresql/data
 
 # Copy the built JARs from builder stage
 COPY --from=builder --chown=spring:spring /build/eureka-server/target/eureka-server-0.0.1-SNAPSHOT.jar /app/eureka-server/app.jar
