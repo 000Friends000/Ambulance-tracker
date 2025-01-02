@@ -1,0 +1,9 @@
+mine\hospital_service\HospitalManagementServiceApplication.class
+mine\hospital_service\model\Hospital.class
+mine\hospital_service\config\WebClientConfig.class
+mine\hospital_service\service\HospitalService.class
+mine\hospital_service\config\DataInitializer.class
+mine\hospital_service\dto\AmbulanceDTO.class
+mine\hospital_service\repository\HospitalRepository.class
+mine\hospital_service\config\WebClientConfig$1.class
+mine\hospital_service\controller\HospitalController.class

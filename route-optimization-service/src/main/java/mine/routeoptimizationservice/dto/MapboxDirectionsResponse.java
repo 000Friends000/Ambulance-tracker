@@ -1,9 +1,7 @@
 package mine.routeoptimizationservice.dto;
 
-import lombok.Data;
 import java.util.List;
 
-@Data
 public class MapboxDirectionsResponse {
     private List<Route> routes;
 
@@ -15,7 +13,6 @@ public class MapboxDirectionsResponse {
         this.routes = routes;
     }
 
-    @Data
     public static class Route {
         private String geometry;
         private double distance;

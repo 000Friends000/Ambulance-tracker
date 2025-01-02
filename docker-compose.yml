@@ -72,6 +72,7 @@ services:
         condition: service_healthy
     environment:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - MAPBOX_API_KEY=${MAPBOX_API_KEY}
 
 networks:
   default:

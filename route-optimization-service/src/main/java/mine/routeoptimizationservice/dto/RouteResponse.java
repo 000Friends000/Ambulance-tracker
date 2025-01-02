@@ -1,8 +1,5 @@
 package mine.routeoptimizationservice.dto;
 
-import lombok.Data;
-
-@Data
 public class RouteResponse {
     private String geometry;
     private double distance;
