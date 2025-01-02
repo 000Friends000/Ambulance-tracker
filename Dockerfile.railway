@@ -1,0 +1,56 @@
+# Build stage
+FROM maven:3.8.4-openjdk-17-slim AS builder
+
+# Set working directory
+WORKDIR /build
+
+# Copy the entire project for building
+COPY . .
+
+# Build all services with detailed output
+RUN mvn clean package -DskipTests -X
+
+# Runtime stage
+FROM eclipse-temurin:17-jdk-alpine
+
+WORKDIR /app
+
+# Copy JAR files from builder stage
+COPY --from=builder /build/eureka-server/target/*.jar eureka.jar
+COPY --from=builder /build/api-gateway/target/*.jar gateway.jar
+COPY --from=builder /build/hospital-management-service/target/*.jar hospital.jar
+COPY --from=builder /build/Ambulance_Service/target/*.jar ambulance.jar
+COPY --from=builder /build/route-optimization-service/target/*.jar route.jar
+COPY --from=builder /build/dispatch-coordination-service/target/*.jar dispatch.jar
+
+# Copy init.sql and supervisord.conf
+COPY Ambilance\ Tracker\ Backend/init.sql /docker-entrypoint-initdb.d/
+COPY Ambilance\ Tracker\ Backend/supervisord.conf /etc/supervisord.conf
+
+# Install necessary tools
+RUN apk add --no-cache \
+    curl \
+    supervisor \
+    mysql \
+    mysql-client
+
+# Setup MySQL
+RUN mkdir -p /run/mysqld && \
+    chown -R mysql:mysql /run/mysqld && \
+    mysql_install_db --user=mysql --datadir=/var/lib/mysql
+
+# Set environment variables
+ENV MYSQL_DATABASE=ambulance_db \
+    MYSQL_USER=root \
+    MYSQL_PASSWORD=root \
+    MYSQL_ROOT_PASSWORD=root
+
+# Expose all service ports
+EXPOSE 3306 8761 8084 8093 8095 8096
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
+    CMD curl -f http://localhost:8761/actuator/health || exit 1
+
+# Start services using supervisor
+CMD ["supervisord", "-c", "/etc/supervisord.conf"]
