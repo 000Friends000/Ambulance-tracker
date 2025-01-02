@@ -13,27 +13,6 @@ services:
       - "3307:3306"
     volumes:
       - mysql_data:/var/lib/mysql
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
-
-  eureka-server:
-    container_name: test-eureka
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: eureka-server
-    ports:
-      - "8761:8761"
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8761/actuator/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 30s
 
   api-gateway:
     container_name: test-gateway
@@ -42,10 +21,22 @@ services:
       dockerfile: Dockerfile
       target: api-gateway
     ports:
+      - "8084:8084"
+    depends_on:
+      - mysql
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+
+  route-optimization-service:
+    container_name: test-route
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: route-service
+    ports:
       - "8888:8888"
     depends_on:
-      eureka-server:
-        condition: service_healthy
+      - api-gateway
     environment:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
 
@@ -58,10 +49,8 @@ services:
     ports:
       - "8095:8095"
     depends_on:
-      eureka-server:
-        condition: service_healthy
-      mysql:
-        condition: service_healthy
+      - mysql
+      - api-gateway
     environment:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
       - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/ambulance_db
@@ -78,10 +67,8 @@ services:
     ports:
       - "8096:8096"
     depends_on:
-      eureka-server:
-        condition: service_healthy
-      mysql:
-        condition: service_healthy
+      - mysql
+      - api-gateway
     environment:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
       - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/ambulance_db
@@ -98,10 +85,8 @@ services:
     ports:
       - "8093:8093"
     depends_on:
-      eureka-server:
-        condition: service_healthy
-      mysql:
-        condition: service_healthy
+      - mysql
+      - api-gateway
     environment:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
       - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/ambulance_db
@@ -109,30 +94,14 @@ services:
       - SPRING_DATASOURCE_PASSWORD=root
       - SPRING_JPA_HIBERNATE_DDL_AUTO=update
 
-  route-optimization-service:
-    container_name: test-route
+  eureka-server:
+    container_name: test-eureka
     build:
       context: .
       dockerfile: Dockerfile
-      target: route-service
+      target: eureka-server
     ports:
-      - "8084:8084"
-    depends_on:
-      eureka-server:
-        condition: service_healthy
-      mysql:
-        condition: service_healthy
-    environment:
-      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
-      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/ambulance_db
-      - SPRING_DATASOURCE_USERNAME=root
-      - SPRING_DATASOURCE_PASSWORD=root
-      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
-
-networks:
-  default:
-    name: test-network
-    driver: bridge
+      - "8761:8761"
 
 volumes:
   mysql_data:
