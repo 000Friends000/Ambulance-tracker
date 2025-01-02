@@ -3,13 +3,13 @@ FROM maven:3.9.9-eclipse-temurin-17-alpine AS builder
 WORKDIR /build
 
 # Copy the parent pom.xml and all service files
-COPY ["./Ambilance Tracker Backend/pom.xml", "./"]
-COPY ["./Ambilance Tracker Backend/eureka-server/", "./eureka-server/"]
-COPY ["./Ambilance Tracker Backend/api-gateway/", "./api-gateway/"]
-COPY ["./Ambilance Tracker Backend/Ambulance_Service/", "./Ambulance_Service/"]
-COPY ["./Ambilance Tracker Backend/dispatch-coordination-service/", "./dispatch-coordination-service/"]
-COPY ["./Ambilance Tracker Backend/hospital-management-service/", "./hospital-management-service/"]
-COPY ["./Ambilance Tracker Backend/route-optimization-service/", "./route-optimization-service/"]
+COPY pom.xml .
+COPY eureka-server/ ./eureka-server/
+COPY api-gateway/ ./api-gateway/
+COPY Ambulance_Service/ ./Ambulance_Service/
+COPY dispatch-coordination-service/ ./dispatch-coordination-service/
+COPY hospital-management-service/ ./hospital-management-service/
+COPY route-optimization-service/ ./route-optimization-service/
 
 # Build all services
 RUN mvn clean package -DskipTests
@@ -38,16 +38,16 @@ RUN mkdir -p \
 
 # Copy the built JARs from builder stage
 COPY --from=builder --chown=spring:spring /build/eureka-server/target/eureka-server-0.0.1-SNAPSHOT.jar /app/eureka-server/app.jar
-COPY --from=builder --chown=spring:spring /build/api-gateway/target/api-gateway.jar /app/api-gateway/app.jar
+COPY --from=builder --chown=spring:spring /build/api-gateway/target/api-gateway-0.0.1-SNAPSHOT.jar /app/api-gateway/app.jar
 COPY --from=builder --chown=spring:spring /build/Ambulance_Service/target/Ambulance_Service-0.0.1-SNAPSHOT.jar /app/ambulance-service/app.jar
 COPY --from=builder --chown=spring:spring /build/dispatch-coordination-service/target/dispatch-coordination-service-0.0.1-SNAPSHOT.jar /app/dispatch-service/app.jar
 COPY --from=builder --chown=spring:spring /build/hospital-management-service/target/hospital-management-service-0.0.1-SNAPSHOT.jar /app/hospital-service/app.jar
 COPY --from=builder --chown=spring:spring /build/route-optimization-service/target/route-optimization-service-0.0.1-SNAPSHOT.jar /app/route-service/app.jar
 
 # Copy configuration files
-COPY ["./Ambilance Tracker Backend/init.sql", "/docker-entrypoint-initdb.d/"]
-COPY ["./Ambilance Tracker Backend/supervisord.conf", "/etc/supervisord.conf"]
-COPY ["./Ambilance Tracker Backend/init-postgres.sh", "/docker-entrypoint-initdb.d/"]
+COPY init.sql /docker-entrypoint-initdb.d/
+COPY supervisord.conf /etc/supervisord.conf
+COPY init-postgres.sh /docker-entrypoint-initdb.d/
 
 # Make init script executable and run it
 RUN chmod +x /docker-entrypoint-initdb.d/init-postgres.sh && \
