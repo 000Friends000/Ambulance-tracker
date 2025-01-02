@@ -3,13 +3,13 @@ FROM maven:3.9.9-eclipse-temurin-17-alpine AS builder
 WORKDIR /build
 
 # Copy the parent pom.xml and all service files
-COPY pom.xml .
-COPY eureka-server/ ./eureka-server/
-COPY api-gateway/ ./api-gateway/
-COPY Ambulance_Service/ ./Ambulance_Service/
-COPY dispatch-coordination-service/ ./dispatch-coordination-service/
-COPY hospital-management-service/ ./hospital-management-service/
-COPY route-optimization-service/ ./route-optimization-service/
+COPY ../pom.xml .
+COPY ../eureka-server/ ./eureka-server/
+COPY ../api-gateway/ ./api-gateway/
+COPY ../Ambulance_Service/ ./Ambulance_Service/
+COPY ../dispatch-coordination-service/ ./dispatch-coordination-service/
+COPY ../hospital-management-service/ ./hospital-management-service/
+COPY ../route-optimization-service/ ./route-optimization-service/
 
 # Build all services
 RUN mvn clean package -DskipTests
@@ -45,9 +45,9 @@ COPY --from=builder --chown=spring:spring /build/hospital-management-service/tar
 COPY --from=builder --chown=spring:spring /build/route-optimization-service/target/route-optimization-service-0.0.1-SNAPSHOT.jar /app/route-service/app.jar
 
 # Copy configuration files
-COPY init.sql /docker-entrypoint-initdb.d/
-COPY supervisord.conf /etc/supervisord.conf
-COPY init-postgres.sh /docker-entrypoint-initdb.d/
+COPY ./init.sql /docker-entrypoint-initdb.d/
+COPY ./supervisord.conf /etc/supervisord.conf
+COPY ./init-postgres.sh /docker-entrypoint-initdb.d/
 
 # Make init script executable and run it
 RUN chmod +x /docker-entrypoint-initdb.d/init-postgres.sh && \
