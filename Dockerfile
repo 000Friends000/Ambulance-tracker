@@ -28,7 +28,7 @@ WORKDIR /app
 # Copy JARs from builder stage
 COPY --from=builder /build /build
 
-# Copy and run JAR files
+# Copy and run JAR files with fixed naming
 RUN for jar in \
         /build/eureka-server/target/*.jar \
         /build/api-gateway/target/*.jar \
@@ -37,11 +37,16 @@ RUN for jar in \
         /build/route-optimization-service/target/*.jar; \
     do \
         if [ -e "$jar" ]; then \
-            service_name=$(basename $(dirname $(dirname $jar))); \
-            echo "Copying $jar to /app/$service_name.jar"; \
-            cp "$jar" "/app/$service_name.jar"; \
-        fi; \
+            case $(basename $(dirname $(dirname $jar))) in \
+                "eureka-server") cp "$jar" "/app/eureka-server.jar" ;;
+                "api-gateway") cp "$jar" "/app/api-gateway.jar" ;;
+                "Ambulance_Service") cp "$jar" "/app/ambulance-service.jar" ;;
+                "hospital-management-service") cp "$jar" "/app/hospital-service.jar" ;;
+                "route-optimization-service") cp "$jar" "/app/route-optimization-service.jar" ;;
+            esac \
+        fi \
     done && \
+    ls -la /app/*.jar && \
     rm -rf /build
 
 # Copy startup script

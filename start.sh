@@ -53,6 +53,10 @@ start_service() {
 
 echo "Starting services..."
 
+# List all JARs in /app
+echo "Available JARs:"
+ls -la /app/*.jar || true
+
 # Install netcat for port checking
 apk add --no-cache netcat-openbsd
 
@@ -96,19 +100,19 @@ fi
 
 # Start other services
 for service in \
-    "ambulance-service.jar:Ambulance Service:8081" \
-    "hospital-service.jar:Hospital Service:8082" \
-    "route-optimization.jar:Route Optimization Service:8083"; do
+    "/app/ambulance-service.jar:Ambulance Service:8081" \
+    "/app/hospital-service.jar:Hospital Service:8082" \
+    "/app/route-optimization-service.jar:Route Optimization Service:8083"; do
     
     IFS=: read jar name port <<EOF
 $service
 EOF
     
-    start_service "/app/$jar" "$name" 15 $port
+    start_service "$jar" "$name" 15 $port
     if [ $? -ne 0 ]; then
         echo "Warning: Failed to start $name"
         echo "$name logs:"
-        cat "/app/$name.log"
+        cat "/app/$name.log" || true
     fi
 done
 
