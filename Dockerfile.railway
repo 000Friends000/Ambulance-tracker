@@ -54,14 +54,17 @@ RUN mkdir -p \
     route-service
 
 # Setup MySQL with proper permissions
-USER root
 RUN set -ex && \
     mkdir -p /var/run/mysqld && \
     mkdir -p /var/lib/mysql && \
     mkdir -p /docker-entrypoint-initdb.d && \
-    chown -R mysql:mysql /var/run/mysqld && \
-    chown -R mysql:mysql /var/lib/mysql && \
-    chown -R mysql:mysql /docker-entrypoint-initdb.d && \
+    addgroup mysql root && \
+    chown -R mysql:root /var/run/mysqld && \
+    chown -R mysql:root /var/lib/mysql && \
+    chown -R mysql:root /docker-entrypoint-initdb.d && \
+    chmod 777 /var/run/mysqld && \
+    chmod -R 777 /var/lib/mysql && \
+    chmod -R 777 /docker-entrypoint-initdb.d && \
     mysql_install_db --user=mysql --datadir=/var/lib/mysql
 
 # Copy the built JARs from builder stage
