@@ -3,20 +3,21 @@
 # Start Eureka Server and wait for it to be ready
 java -jar /app/eureka-server.jar &
 echo "Starting Eureka Server..."
-sleep 30
+sleep 45  # Increased wait time for Eureka Server
 
-# Start other services
+# Start API Gateway
 java -jar /app/api-gateway.jar &
 echo "Starting API Gateway..."
-sleep 10
+sleep 30  # Increased wait time for API Gateway
 
+# Start other services
 java -jar /app/ambulance-service.jar &
 echo "Starting Ambulance Service..."
-sleep 10
+sleep 15
 
 java -jar /app/hospital-service.jar &
 echo "Starting Hospital Service..."
-sleep 10
+sleep 15
 
 java -jar /app/route-optimization.jar &
 echo "Starting Route Optimization Service..."
