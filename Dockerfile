@@ -25,22 +25,24 @@ RUN apk add --no-cache curl
 # Create app directory
 WORKDIR /app
 
-# Create a script to copy JARs
-RUN echo '#!/bin/sh\n\
-for jar in \
-    /build/eureka-server/target/*.jar \
-    /build/api-gateway/target/*.jar \
-    /build/Ambulance_Service/target/*.jar \
-    /build/hospital-management-service/target/*.jar \
-    /build/route-optimization-service/target/*.jar; do \
-    if [ -f "$jar" ]; then \
-        cp "$jar" /app/$(basename $(dirname $(dirname $jar))).jar; \
-    fi \
-done' > /copy-jars.sh && chmod +x /copy-jars.sh
-
 # Copy JARs from builder stage
 COPY --from=builder /build /build
-RUN /copy-jars.sh && rm -rf /build /copy-jars.sh
+
+# Copy and run JAR files
+RUN for jar in \
+        /build/eureka-server/target/*.jar \
+        /build/api-gateway/target/*.jar \
+        /build/Ambulance_Service/target/*.jar \
+        /build/hospital-management-service/target/*.jar \
+        /build/route-optimization-service/target/*.jar; \
+    do \
+        if [ -e "$jar" ]; then \
+            service_name=$(basename $(dirname $(dirname $jar))); \
+            echo "Copying $jar to /app/$service_name.jar"; \
+            cp "$jar" "/app/$service_name.jar"; \
+        fi; \
+    done && \
+    rm -rf /build
 
 # Copy startup script
 COPY start.sh /app/start.sh
