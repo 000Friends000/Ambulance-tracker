@@ -39,8 +39,9 @@ RUN set -x && \
 # Runtime stage
 FROM eclipse-temurin:17-jre-alpine
 
-# Install necessary tools
-RUN apk add --no-cache curl supervisor mysql mysql-client
+# Install necessary tools and create users
+RUN apk add --no-cache curl supervisor mysql mysql-client && \
+    addgroup -S spring && adduser -S spring -G spring
 
 # Create app directories
 WORKDIR /app
@@ -53,13 +54,15 @@ RUN mkdir -p \
     route-service
 
 # Setup MySQL with proper permissions
-RUN mkdir -p /var/run/mysqld && \
-    chown mysql:mysql /var/run/mysqld && \
+USER root
+RUN set -ex && \
+    mkdir -p /var/run/mysqld && \
     mkdir -p /var/lib/mysql && \
-    chown -R mysql:mysql /var/lib/mysql && \
-    mysql_install_db --user=mysql --datadir=/var/lib/mysql && \
     mkdir -p /docker-entrypoint-initdb.d && \
-    chown -R mysql:mysql /docker-entrypoint-initdb.d
+    chown -R mysql:mysql /var/run/mysqld && \
+    chown -R mysql:mysql /var/lib/mysql && \
+    chown -R mysql:mysql /docker-entrypoint-initdb.d && \
+    mysql_install_db --user=mysql --datadir=/var/lib/mysql
 
 # Copy the built JARs from builder stage
 COPY --from=builder --chown=spring:spring /build/eureka-server/target/eureka-server-0.0.1-SNAPSHOT.jar /app/eureka-server/app.jar
@@ -68,9 +71,6 @@ COPY --from=builder --chown=spring:spring /build/Ambulance_Service/target/Ambula
 COPY --from=builder --chown=spring:spring /build/dispatch-coordination-service/target/dispatch-coordination-service-0.0.1-SNAPSHOT.jar /app/dispatch-service/app.jar
 COPY --from=builder --chown=spring:spring /build/hospital-management-service/target/hospital-management-service-0.0.1-SNAPSHOT.jar /app/hospital-service/app.jar
 COPY --from=builder --chown=spring:spring /build/route-optimization-service/target/route-optimization-service-0.0.1-SNAPSHOT.jar /app/route-service/app.jar
-
-# Create spring user
-RUN addgroup -S spring && adduser -S spring -G spring
 
 # Copy configuration files
 COPY Ambilance\ Tracker\ Backend/init.sql /docker-entrypoint-initdb.d/
