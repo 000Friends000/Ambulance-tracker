@@ -36,6 +36,14 @@ RUN mkdir -p \
     chown -R postgres:postgres /var/lib/postgresql/data && \
     chmod 700 /var/lib/postgresql/data
 
+# Initialize PostgreSQL
+USER postgres
+RUN initdb -D /var/lib/postgresql/data && \
+    echo "host all all 0.0.0.0/0 md5" >> /var/lib/postgresql/data/pg_hba.conf && \
+    echo "listen_addresses='*'" >> /var/lib/postgresql/data/postgresql.conf
+
+USER root
+
 # Copy the built JARs from builder stage
 COPY --from=builder --chown=spring:spring /build/eureka-server/target/eureka-server-0.0.1-SNAPSHOT.jar /app/eureka-server/app.jar
 COPY --from=builder --chown=spring:spring /build/api-gateway/target/api-gateway-0.0.1-SNAPSHOT.jar /app/api-gateway/app.jar
@@ -44,14 +52,8 @@ COPY --from=builder --chown=spring:spring /build/dispatch-coordination-service/t
 COPY --from=builder --chown=spring:spring /build/hospital-management-service/target/hospital-management-service-0.0.1-SNAPSHOT.jar /app/hospital-service/app.jar
 COPY --from=builder --chown=spring:spring /build/route-optimization-service/target/route-optimization-service-0.0.1-SNAPSHOT.jar /app/route-service/app.jar
 
-# Copy configuration files
-COPY init.sql /docker-entrypoint-initdb.d/
+# Copy supervisor configuration
 COPY supervisord.conf /etc/supervisord.conf
-COPY init-postgres.sh /docker-entrypoint-initdb.d/
-
-# Make init script executable and run it
-RUN chmod +x /docker-entrypoint-initdb.d/init-postgres.sh && \
-    /docker-entrypoint-initdb.d/init-postgres.sh
 
 # Set Java options
 ENV JAVA_OPTS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -Djava.security.egd=file:/dev/./urandom"
@@ -61,6 +63,14 @@ ENV POSTGRES_DB=ambulance_db \
     POSTGRES_USER=postgres \
     POSTGRES_PASSWORD=root
 
+# Create database and user when container starts
+RUN echo '#!/bin/sh\n\
+pg_ctl start -D /var/lib/postgresql/data\n\
+sleep 5\n\
+psql -U postgres -c "CREATE DATABASE ambulance_db;"\n\
+psql -U postgres -c "ALTER USER postgres WITH PASSWORD '\''root'\'';"' > /docker-entrypoint.sh && \
+chmod +x /docker-entrypoint.sh
+
 # Expose all necessary ports
 EXPOSE 5432 8761 8084 8095 8096 8093
 
@@ -68,5 +78,5 @@ EXPOSE 5432 8761 8084 8095 8096 8093
 HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
     CMD curl -f http://localhost:8761/actuator/health || exit 1
 
-# Start supervisor
-CMD ["supervisord", "-c", "/etc/supervisord.conf"]
+# Start PostgreSQL and supervisor
+CMD ["/bin/sh", "-c", "/docker-entrypoint.sh && supervisord -c /etc/supervisord.conf"]
