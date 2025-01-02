@@ -26,28 +26,14 @@ RUN apk add --no-cache curl
 WORKDIR /app
 
 # Copy JARs from builder stage
-COPY --from=builder /build /build
+COPY --from=builder /build/eureka-server/target/*.jar /app/eureka-server.jar
+COPY --from=builder /build/api-gateway/target/*.jar /app/api-gateway.jar
+COPY --from=builder /build/Ambulance_Service/target/*.jar /app/ambulance-service.jar
+COPY --from=builder /build/hospital-management-service/target/*.jar /app/hospital-service.jar
+COPY --from=builder /build/route-optimization-service/target/*.jar /app/route-optimization-service.jar
 
-# Copy and run JAR files with fixed naming
-RUN for jar in \
-        /build/eureka-server/target/*.jar \
-        /build/api-gateway/target/*.jar \
-        /build/Ambulance_Service/target/*.jar \
-        /build/hospital-management-service/target/*.jar \
-        /build/route-optimization-service/target/*.jar; \
-    do \
-        if [ -e "$jar" ]; then \
-            case $(basename $(dirname $(dirname $jar))) in \
-                "eureka-server") cp "$jar" "/app/eureka-server.jar" ;;
-                "api-gateway") cp "$jar" "/app/api-gateway.jar" ;;
-                "Ambulance_Service") cp "$jar" "/app/ambulance-service.jar" ;;
-                "hospital-management-service") cp "$jar" "/app/hospital-service.jar" ;;
-                "route-optimization-service") cp "$jar" "/app/route-optimization-service.jar" ;;
-            esac \
-        fi \
-    done && \
-    ls -la /app/*.jar && \
-    rm -rf /build
+# List all JARs for verification
+RUN ls -la /app/*.jar || true
 
 # Copy startup script
 COPY start.sh /app/start.sh
