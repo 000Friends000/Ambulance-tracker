@@ -17,9 +17,17 @@
         <processorPath useClasspath="false">
           <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok/1.18.30/lombok-1.18.30.jar" />
         </processorPath>
-        <module name="hospital-management-service" />
         <module name="Ambulance_Service" />
         <module name="dispatch-coordination-service" />
+      </profile>
+      <profile name="Annotation profile for hospital-management-service" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <processorPath useClasspath="false">
+          <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok/1.18.30/lombok-1.18.30.jar" />
+        </processorPath>
+        <module name="hospital-management-service" />
       </profile>
       <profile name="Annotation profile for ambulance-tracker" enabled="true">
         <sourceOutputDir name="target/generated-sources/annotations" />
